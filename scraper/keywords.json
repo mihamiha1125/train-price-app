@@ -1,0 +1,7 @@
+[
+  { "id": "all",   "label": "鉄道模型 全体", "query": "鉄道模型" },
+  { "id": "n",     "label": "Nゲージ",       "query": "Nゲージ" },
+  { "id": "ho",    "label": "HOゲージ",      "query": "HOゲージ" },
+  { "id": "kato",  "label": "KATO",          "query": "KATO 鉄道模型" },
+  { "id": "tomix", "label": "TOMIX",         "query": "TOMIX 鉄道模型" }
+]

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>模型相場</title>
+<meta name="theme-color" content="#0f1720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="模型相場">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f4f6f8; --card: #ffffff; --text: #16202a; --sub: #5d6b78; --line: #e2e7ec;
+    --accent: #1f8a5b; --accent2: #c2662d; --up: #c23a3a; --down: #1f6fc2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1720; --card: #18232e; --text: #e8edf2; --sub: #93a1ae; --line: #263441;
+            --accent: #3fc48a; --accent2: #f0965a; --up: #ff7a7a; --down: #6fb2ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+         padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  header { padding: 18px 16px 8px; }
+  h1 { font-size: 20px; margin: 0; }
+  .updated { color: var(--sub); font-size: 12px; margin-top: 4px; }
+  .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; border: 1px solid var(--line); background: var(--card); color: var(--text);
+         border-radius: 999px; padding: 7px 14px; font-size: 14px; }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  main { padding: 0 16px 24px; max-width: 640px; margin: 0 auto; }
+  .card { background: var(--card); border-radius: 14px; padding: 16px; margin-top: 12px;
+          border: 1px solid var(--line); }
+  .label { color: var(--sub); font-size: 12px; }
+  .big { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 4px 0; }
+  .delta { font-size: 13px; font-variant-numeric: tabular-nums; }
+  .delta.up { color: var(--up); } .delta.down { color: var(--down); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .grid div { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; }
+  .grid .label { font-weight: 400; }
+  .range { display: flex; gap: 6px; margin-bottom: 8px; }
+  .range button { border: 1px solid var(--line); background: none; color: var(--sub);
+                  border-radius: 8px; padding: 4px 10px; font-size: 12px; }
+  .range button.on { color: var(--text); border-color: var(--text); }
+  svg text { fill: var(--sub); font-size: 10px; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--sub); margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  .item { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line);
+          text-decoration: none; color: inherit; }
+  .item:first-of-type { border-top: 0; }
+  .item img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; background: var(--line); flex: none; }
+  .item .t { font-size: 13px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2;
+             -webkit-box-orient: vertical; overflow: hidden; }
+  .item .p { font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 3px; }
+  .item .m { color: var(--sub); font-size: 11px; font-weight: 400; margin-left: 6px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  .empty { color: var(--sub); font-size: 13px; padding: 20px 0; text-align: center; }
+  .note { color: var(--sub); font-size: 11px; line-height: 1.5; margin-top: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🚃 鉄道模型 落札相場</h1>
+  <div class="updated" id="updated">読み込み中…</div>
+</header>
+<nav class="tabs" id="tabs"></nav>
+<main>
+  <section class="card">
+    <div class="label">直近の落札平均（最新100件）</div>
+    <div class="big" id="recentAvg">—</div>
+    <div class="delta" id="delta"></div>
+    <div class="grid">
+      <div><span class="label">中央値</span><br><span id="median">—</span></div>
+      <div><span class="label">公式相場平均</span><br><span id="yahooAvg">—</span></div>
+      <div><span class="label">落札件数</span><br><span id="total">—</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>推移</h2>
+    <div class="range" id="range">
+      <button data-d="7" class="on">7日</button><button data-d="30">30日</button>
+      <button data-d="90">90日</button><button data-d="0">全期間</button>
+    </div>
+    <div id="chart"></div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>直近平均</span>
+      <span><i style="background:var(--accent2)"></i>公式相場平均</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>最近の落札</h2>
+    <div id="items"></div>
+  </section>
+
+  <p class="note">毎日 7時・12時・19時ごろにヤフオクの落札済み検索から自動取得しています。
+    「公式相場平均」はヤフオクが表示する過去約120日の平均、「直近の落札平均」は取得時点で新しい順に最大100件の平均です。</p>
+</main>
+
+<script>
+const yen = v => v == null ? "—" : "¥" + Math.round(v).toLocaleString("ja-JP");
+const $ = id => document.getElementById(id);
+let hist = [], latest = null, current = "all", days = 7;
+
+try { current = localStorage.getItem("kw") || "all"; } catch {}
+
+async function load() {
+  const bust = "?t=" + Date.now();
+  [hist, latest] = await Promise.all([
+    fetch("data/history.json" + bust).then(r => r.json()),
+    fetch("data/latest.json" + bust).then(r => r.json()),
+  ]);
+  if (!latest.keywords.some(k => k.id === current)) current = latest.keywords[0].id;
+  const d = new Date(latest.updated);
+  $("updated").textContent = `最終更新 ${d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}（${latest.slot}）`;
+  renderTabs(); render();
+}
+
+function renderTabs() {
+  $("tabs").innerHTML = "";
+  for (const k of latest.keywords) {
+    const b = document.createElement("button");
+    b.className = "tab" + (k.id === current ? " on" : "");
+    b.textContent = k.label;
+    b.onclick = () => { current = k.id; try { localStorage.setItem("kw", current); } catch {} renderTabs(); render(); };
+    $("tabs").appendChild(b);
+  }
+}
+
+function render() {
+  const series = hist.filter(h => h.data[current]).map(h => ({ t: new Date(h.time), ...h.data[current] }));
+  const last = series.at(-1), prev = series.at(-2);
+  $("recentAvg").textContent = yen(last?.recentAvg);
+  $("median").textContent = yen(last?.recentMedian);
+  $("yahooAvg").textContent = yen(last?.yahooAvg);
+  $("total").textContent = last?.total != null ? last.total.toLocaleString("ja-JP") + "件" : "—";
+  const dl = $("delta");
+  if (last && prev && prev.recentAvg) {
+    const diff = last.recentAvg - prev.recentAvg, pct = diff / prev.recentAvg * 100;
+    dl.className = "delta " + (diff > 0 ? "up" : diff < 0 ? "down" : "");
+    dl.textContent = `前回比 ${diff >= 0 ? "+" : "−"}${yen(Math.abs(diff)).slice(0)}（${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%）`;
+  } else { dl.className = "delta"; dl.textContent = "前回データなし"; }
+
+  const from = days ? Date.now() - days * 864e5 : 0;
+  drawChart(series.filter(s => +s.t >= from));
+
+  const items = latest.items[current] || [];
+  $("items").innerHTML = items.length ? items.map(i => `
+    <a class="item" href="${i.url}" target="_blank" rel="noopener">
+      <img src="${i.image}" alt="" loading="lazy">
+      <div><div class="t">${esc(i.title)}</div>
+      <div class="p">${yen(i.price)}<span class="m">入札${i.bids ?? 0} ・ ${fmtEnd(i.endTime)}</span></div></div>
+    </a>`).join("") : `<div class="empty">データがありません</div>`;
+}
+
+function drawChart(s) {
+  const el = $("chart");
+  if (s.length < 2) { el.innerHTML = `<div class="empty">データが2回分以上たまるとグラフが表示されます（現在 ${s.length} 件）</div>`; return; }
+  const W = 340, H = 180, L = 46, R = 8, T = 10, B = 22;
+  const vals = s.flatMap(p => [p.recentAvg, p.yahooAvg]).filter(v => v != null);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.1 || hi * 0.05 || 1; lo -= pad; hi += pad;
+  const t0 = +s[0].t, t1 = +s.at(-1).t;
+  const x = t => L + (W - L - R) * ((+t - t0) / (t1 - t0 || 1));
+  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const path = k => s.filter(p => p[k] != null).map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)},${y(p[k]).toFixed(1)}`).join("");
+  let grid = "";
+  for (let i = 0; i <= 3; i++) {
+    const v = lo + (hi - lo) * i / 3, yy = y(v);
+    grid += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L - 4}" y="${yy + 3}" text-anchor="end">${Math.round(v).toLocaleString()}</text>`;
+  }
+  const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  grid += `<text x="${L}" y="${H - 6}">${md(s[0].t)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${md(s.at(-1).t)}</text>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="落札平均の推移">${grid}
+    <path d="${path("yahooAvg")}" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="${path("recentAvg")}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
+}
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmtEnd = s => { const d = new Date(s); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+
+$("range").onclick = e => {
+  if (!e.target.dataset.d) return;
+  days = +e.target.dataset.d;
+  for (const b of $("range").children) b.classList.toggle("on", b === e.target);
+  render();
+};
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+load().catch(e => { $("updated").textContent = "データの読み込みに失敗しました: " + e.message; });
+</script>
+</body>
+</html>
