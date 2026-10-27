@@ -3109,5 +3109,56 @@
     "recentMedian": 4345
    }
   }
+ },
+ {
+  "time": "2026-10-28T00:43:27+09:00",
+  "slot": "朝",
+  "data": {
+   "all": {
+    "yahooAvg": 9224,
+    "yahooMin": 1,
+    "yahooMax": 1155000,
+    "total": 99145,
+    "recentCount": 100,
+    "recentAvg": 9677,
+    "recentMedian": 3300
+   },
+   "n": {
+    "yahooAvg": 6823,
+    "yahooMin": 1,
+    "yahooMax": 311301,
+    "total": 119851,
+    "recentCount": 100,
+    "recentAvg": 7617,
+    "recentMedian": 4865
+   },
+   "ho": {
+    "yahooAvg": 14946,
+    "yahooMin": 1,
+    "yahooMax": 1000000,
+    "total": 34037,
+    "recentCount": 100,
+    "recentAvg": 23699,
+    "recentMedian": 7158
+   },
+   "kato": {
+    "yahooAvg": 7313,
+    "yahooMin": 1,
+    "yahooMax": 311000,
+    "total": 29855,
+    "recentCount": 100,
+    "recentAvg": 6839,
+    "recentMedian": 4040
+   },
+   "tomix": {
+    "yahooAvg": 8697,
+    "yahooMin": 1,
+    "yahooMax": 311000,
+    "total": 19698,
+    "recentCount": 100,
+    "recentAvg": 10004,
+    "recentMedian": 5898
+   }
+  }
  }
 ]
